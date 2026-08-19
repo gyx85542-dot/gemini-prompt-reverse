@@ -612,6 +612,7 @@ function CardModal({ card, presets, models, onClose, onRerun, onRetry }) {
   const failed = card.status === "failed";
   const [form, setForm] = useState(() => ({ ...emptyDraft(card), sourceCardId: null }));
   const [copied, setCopied] = useState(false);
+  const [copiedUser, setCopiedUser] = useState(false);
   const [zoom, setZoom] = useState(null);
   const [openParts, setOpenParts] = useState({ images: true, system: false, user: false, output: true });
 
@@ -645,6 +646,24 @@ function CardModal({ card, presets, models, onClose, onRerun, onRetry }) {
     }
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function copyUserText(e) {
+    e.stopPropagation();
+    const text = card.user_text || "";
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+    setCopiedUser(true);
+    window.setTimeout(() => setCopiedUser(false), 1500);
   }
 
   useEffect(() => {
@@ -708,7 +727,12 @@ function CardModal({ card, presets, models, onClose, onRerun, onRetry }) {
               </FoldSection>
               {card.user_text ? (
                 <FoldSection title="用户文字" open={openParts.user} onToggle={() => togglePart("user")}>
-                  <p className="full">{card.user_text}</p>
+                  <div className="fold-body-tools">
+                    <button className="btn fold-copy" type="button" onClick={copyUserText}>
+                      {copiedUser ? "已复制" : "复制"}
+                    </button>
+                    <p className="full">{card.user_text}</p>
+                  </div>
                 </FoldSection>
               ) : null}
               <FoldSection title="产出" open={openParts.output} onToggle={() => togglePart("output")}>
